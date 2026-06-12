@@ -1,0 +1,5 @@
+#include "..\include\vex.h"
+#include "..\include\bot\bot.hpp"
+#include "..\include\bot\drivetrain.hpp"
+#include "..\include\bot\location.hpp"
+#include "..\include\auton.hpp"

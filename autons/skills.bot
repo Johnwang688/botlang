@@ -1,0 +1,37 @@
+# skills.bot — a sample autonomous routine.
+#
+# Compiles to bot::autonomous::skills() via:
+#   python interpreter/main.py autons/skills.bot
+#   python interpreter/install.py
+#
+# Then from src/main.cpp you can call:
+#   #include "autons.hpp"
+#   bot::autonomous::skills();
+
+print "Starting skills routine" on brain
+
+# Drive forward for 2 seconds, then stop.
+drive forward at 50 percent
+wait 2 seconds
+stop driving
+
+wait 200 ms
+
+# Turn left for 1 second, then stop.
+turn left at 30 percent
+wait 1 seconds
+stop driving
+
+# Bail early if the drive motors got hot.
+if leftA temperature in percent is greater than 80 then {
+    print "Motors too hot, aborting" on brain
+    stop driving
+    return
+}
+
+# Final sprint forward.
+drive forward at 100 percent
+wait 1 seconds
+brake drive
+
+print "Skills routine done" on brain

@@ -1,0 +1,185 @@
+# Bot language — language definition.
+#
+# Format:
+#   unit <word>     => <cpp>      # map a UNIT token to its C++ value
+#   symbol <word>   => <cpp>      # remap a bare identifier
+#   filler <words>  ...           # words silently dropped if not consumed
+#   phrase <pat>    => <template> # <slot> = capture, indented continuation OK
+#
+# Phrases are tried longest-first. Templates should NOT include trailing ';'
+# — the statement layer adds it. Use literal ';' inside templates only when
+# you embed C++ that already needs it.
+
+
+# ─── units ──────────────────────────────────────────────────────────────────
+unit percent      => vex::percent
+unit pct          => vex::percent
+unit ms           => vex::msec
+unit milliseconds => vex::msec
+unit millisecond  => vex::msec
+unit seconds      => vex::seconds
+unit second       => vex::seconds
+unit sec          => vex::seconds
+unit degrees      => vex::degrees
+unit degree       => vex::degrees
+unit deg          => vex::degrees
+unit rotations    => vex::turns
+unit rotation     => vex::turns
+unit turns        => vex::turns
+unit turn         => vex::turns
+unit rpm          => vex::velocityUnits::rpm
+unit inches       => vex::inches
+unit inch         => vex::inches
+unit mm           => vex::distanceUnits::mm
+
+
+# ─── symbols (your robot config) ────────────────────────────────────────────
+# Names below match include/bot/bot.hpp exactly.
+symbol brain      => bot::Brain
+symbol controller => bot::Controller1
+symbol leftA      => bot::motors::leftA
+symbol leftB      => bot::motors::leftB
+symbol leftC      => bot::motors::leftC
+symbol rightA     => bot::motors::rightA
+symbol rightB     => bot::motors::rightB
+symbol rightC     => bot::motors::rightC
+symbol left_dt    => bot::motors::left_dt
+symbol right_dt   => bot::motors::right_dt
+symbol all_dt     => bot::motors::all_dt
+symbol imu        => bot::sensors::imu
+
+
+# ─── filler (drop silently if unused) ───────────────────────────────────────
+# Don't add words that are part of real phrases (is, in, at, on, of, to).
+filler a an the please just really
+
+
+# ─── boolean literals ───────────────────────────────────────────────────────
+phrase true        => 1
+phrase false       => 0
+
+
+# ─── operators ──────────────────────────────────────────────────────────────
+phrase is greater than or equal to    => >=
+phrase is less than or equal to       => <=
+phrase greater than or equal to       => >=
+phrase less than or equal to          => <=
+phrase is greater than                => >
+phrase is less than                   => <
+phrase is not equal to                => !=
+phrase is equal to                    => ==
+phrase greater than                   => >
+phrase less than                      => <
+phrase not equal to                   => !=
+phrase equal to                       => ==
+phrase equals                         => ==
+phrase is not                         => !=
+phrase is                             => ==
+phrase and                            => &&
+phrase or                             => ||
+phrase not                            => !
+phrase plus                           => +
+phrase minus                          => -
+phrase times                          => *
+phrase divided by                     => /
+
+
+# ─── property access (object property in unit) ──────────────────────────────
+phrase <obj> temperature in <u>   => <obj>.temperature(<u>)
+phrase <obj> position in <u>      => <obj>.position(<u>)
+phrase <obj> velocity in <u>      => <obj>.velocity(<u>)
+phrase <obj> rotation in <u>      => <obj>.rotation(<u>)
+phrase <obj> current              => <obj>.current()
+phrase <obj> voltage              => <obj>.voltage()
+
+
+# ─── motor actions ──────────────────────────────────────────────────────────
+phrase spin <motor> forward at <speed> percent
+    => <motor>.spin(vex::forward, <speed>, vex::percent)
+phrase spin <motor> backward at <speed> percent
+    => <motor>.spin(vex::reverse, <speed>, vex::percent)
+phrase spin <motor> at <speed> percent
+    => <motor>.spin(vex::forward, <speed>, vex::percent)
+phrase spin <motor> at <speed> rpm
+    => <motor>.spin(vex::forward, <speed>, vex::velocityUnits::rpm)
+phrase stop <motor>           => <motor>.stop()
+phrase brake <motor>          => <motor>.stop(vex::brake)
+phrase coast <motor>          => <motor>.stop(vex::coast)
+phrase hold <motor>           => <motor>.stop(vex::hold)
+
+
+# ─── screen ─────────────────────────────────────────────────────────────────
+phrase print <text> on brain   => bot::Brain.Screen.print(<text>)
+phrase print on brain <text>   => bot::Brain.Screen.print(<text>)
+phrase clear brain screen      => bot::Brain.Screen.clearScreen()
+
+
+# ─── timing ─────────────────────────────────────────────────────────────────
+phrase wait <n> ms        => vex::task::sleep(<n>)
+phrase wait <n> msec      => vex::task::sleep(<n>)
+phrase wait <n> seconds   => vex::task::sleep(<n> * 1000)
+
+
+# ─── drivetrain shortcuts (use the motor groups for autonomous) ─────────────
+phrase drive forward at <speed> percent
+    => bot::motors::all_dt.spin(vex::forward, <speed>, vex::percent)
+phrase drive backward at <speed> percent
+    => bot::motors::all_dt.spin(vex::reverse, <speed>, vex::percent)
+phrase drive at <speed> percent
+    => bot::motors::all_dt.spin(vex::forward, <speed>, vex::percent)
+phrase stop driving       => bot::motors::all_dt.stop()
+phrase brake drive        => bot::motors::all_dt.stop(vex::brake)
+phrase hold drive         => bot::motors::all_dt.stop(vex::hold)
+phrase coast drive        => bot::motors::all_dt.stop(vex::coast)
+
+phrase turn left at <speed> percent
+    => bot::motors::left_dt.spin(vex::reverse, <speed>, vex::percent); bot::motors::right_dt.spin(vex::forward, <speed>, vex::percent)
+phrase turn right at <speed> percent
+    => bot::motors::left_dt.spin(vex::forward, <speed>, vex::percent); bot::motors::right_dt.spin(vex::reverse, <speed>, vex::percent)
+
+
+# ─── IMU / sensors ──────────────────────────────────────────────────────────
+phrase <obj> heading        => <obj>.heading()
+phrase reset imu            => bot::sensors::imu.resetRotation()
+phrase calibrate imu        => bot::sensors::imu.calibrate()
+phrase imu is calibrating   => bot::sensors::imu.isCalibrating()
+
+
+# ─── control flow ───────────────────────────────────────────────────────────
+# Block forms — note literal `{` and `}` characters in pattern and template.
+phrase if <cond> then { <body> } else { <else> }
+    => if (<cond>) {
+        <body>
+    } else {
+        <else>
+    }
+phrase if <cond> then { <body> }
+    => if (<cond>) {
+        <body>
+    }
+
+# One-liner forms (note the trailing `;` inside the template — slots here
+# expand to phrase output without their own `;`, so we add them once here).
+phrase if <cond> then <stmt> else <stmt2>
+    => if (<cond>) <stmt>; else <stmt2>;
+phrase if <cond> then <stmt>
+    => if (<cond>) <stmt>;
+
+# Loops
+phrase repeat <n> times { <body> }
+    => for (int __i = 0; __i < <n>; __i++) {
+        <body>
+    }
+phrase for <n> { <body> }
+    => for (int __i = 0; __i < <n>; __i++) {
+        <body>
+    }
+phrase while <cond> { <body> }
+    => while (<cond>) {
+        <body>
+    }
+
+
+# ─── return ─────────────────────────────────────────────────────────────────
+phrase return <value>     => return <value>
+phrase return             => return
